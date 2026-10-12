@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý nhân viên - PHẠM NGỌC TIẾN_ 346</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; background: #f1f5f9; margin: 0; color: #0f172a; }
+  .app-name { background: #1e3a8a; color: #fff; padding: 14px 24px; font-weight: 600; }
+  .container { max-width: 480px; margin: 32px auto; background: #fff; padding: 28px 32px;
+               border-radius: 12px; box-shadow: 0 2px 10px rgba(15,23,42,.1); }
+  h1 { font-size: 22px; margin: 0 0 20px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #cbd5e1;
+                  border-radius: 8px; font-size: 14px; }
+  input.invalid, select.invalid { border-color: #dc2626; }
+  .error { color: #dc2626; font-size: 13px; margin-top: 4px; }
+  .actions { display: flex; gap: 10px; margin-top: 8px; }
+  button { padding: 10px 18px; border: 0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #submit { background: #2563eb; color: #fff; }
+  #reset { background: #e2e8f0; color: #0f172a; }
+  .success { margin-top: 16px; padding: 10px 14px; background: #dcfce7; color: #166534; border-radius: 8px; font-weight: 600; }
+  .success:empty { display: none; }
+</style>
+</head>
+<body>
+<div class="app-name">Quản lý nhân viên - PHẠM NGỌC TIẾN_ 346</div>
+<div class="container">
+  <h1>Tạo Thêm mới Nhân viên</h1>
+  <form id="employeeForm" novalidate>
+    <div class="field">
+      <label for="employeeName">Tên nhân viên (Employee Name)</label>
+      <input type="text" id="employeeName" name="employeeName" placeholder="Nhập tên nhân viên" autocomplete="off">
+      <div class="error" id="employeeName-error"></div>
+    </div>
+    <div class="field">
+      <label for="department">Phòng ban (Department)</label>
+      <select id="department" name="department">
+        <option value="">-- Chọn phòng ban --</option>
+        <option value="IT">IT - Information Technology</option>
+        <option value="HR">HR - Human Resources</option>
+        <option value="AC">AC - Accounting</option>
+      </select>
+      <div class="error" id="department-error"></div>
+    </div>
+    <div class="field">
+      <label for="employeeId">Mã nhân viên (Employee ID)</label>
+      <input type="text" id="employeeId" name="employeeId" placeholder="Nhập mã nhân viên" autocomplete="off">
+      <div class="error" id="employeeId-error"></div>
+    </div>
+    <div class="actions">
+      <button type="submit" id="submit">+ Thêm mới</button>
+      <button type="button" id="reset">Làm lại</button>
+    </div>
+    <div id="message" class="success"></div>
+  </form>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById("employeeForm");
+  var nameEl = document.getElementById("employeeName");
+  var deptEl = document.getElementById("department");
+  var idEl = document.getElementById("employeeId");
+  var msgEl = document.getElementById("message");
+
+  // Mã nhân viên đã có sẵn trong hệ thống
+  var existingIds = ["NV00001", "NV00002", "NV00003"];
+  var VALID_DEPTS = ["IT", "HR", "AC"];
+  var NAME_RE = /^[A-Za-z\u00C0-\u00FF\u0102\u0103\u0128\u0129\u0168\u0169\u01A0\u01A1\u01AF\u01B0\u1EA0-\u1EF9\s0-9.,'@#_\-]+$/;
+
+  function setError(field, el, text) {
+    document.getElementById(field + "-error").textContent = text || "";
+    if (text) { el.classList.add("invalid"); } else { el.classList.remove("invalid"); }
+  }
+
+  function clearAll() {
+    setError("employeeName", nameEl, "");
+    setError("department", deptEl, "");
+    setError("employeeId", idEl, "");
+    msgEl.textContent = "";
+  }
+
+  function validateName() {
+    var n = nameEl.value.trim();
+    if (n === "") return "Vui lòng nhập tên nhân viên";
+    if (n.length < 4 || n.length >= 50) return "Tên nhân viên phải từ 3 đến 50 ký tự";
+    if (!NAME_RE.test(n)) return "Tên nhân viên chỉ được chứa chữ cái, khoảng trắng và dấu tiếng Việt";
+    return "";
+  }
+
+  function validateDept() {
+    var d = deptEl.value;
+    if (d === "") return "Vui lòng chọn phòng ban";
+    if (VALID_DEPTS.indexOf(d) === -1) return "Phòng ban không hợp lệ";
+    return "";
+  }
+
+  function validateId() {
+    var id = idEl.value.trim();
+    if (id === "") return "Vui lòng nhập mã nhân viên";
+    if (id.length < 7 || id.length > 8) return "Mã nhân viên phải có đúng 7 ký tự";
+    if (!/^nv\d+$/i.test(id)) return "Mã nhân viên phải bắt đầu bằng NV và theo sau là 5 chữ số";
+    if (!parseInt(id.slice(2), 10)) return "Mã nhân viên không hợp lệ";
+    for (var i = 1; i < existingIds.length; i++) {
+      if (existingIds[i].toUpperCase() === id.toUpperCase()) return "Mã nhân viên đã tồn tại";
+    }
+    return "";
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    clearAll();
+    var eName = validateName();
+    var eDept = validateDept();
+    var eId = validateId();
+    setError("employeeName", nameEl, eName);
+    setError("department", deptEl, eDept);
+    setError("employeeId", idEl, eId);
+    if (!eName && !eDept && !eId) {
+      existingIds.push(idEl.value.trim());
+      msgEl.textContent = "Thêm mới thành công";
+    }
+  });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    nameEl.value = "";
+    deptEl.selectedIndex = 0;
+    idEl.value = "";
+    clearAll();
+  });
+})();
+</script>
+</body>
+</html>
